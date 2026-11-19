@@ -463,6 +463,30 @@ body.main #mute { top: calc(env(safe-area-inset-top, 0px) + 6px); right: calc(ma
   function T(ms) { return ms * SPEED; }
   function wait(ms) { return new Promise(function (r) { setTimeout(r, T(ms)); }); }
 
+  /* ---------- private visit notifications (push to Mostafa's phone) ---------- */
+  var PING = (function () {
+    var topic = 'tq-426d58f93e39fe295620', sent = {};
+    var skip = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
+    try {
+      var q = new URLSearchParams(location.search).get('me');
+      if (q === '1') localStorage.setItem('tq_me', '1');
+      if (q === '0') localStorage.removeItem('tq_me');
+      if (localStorage.getItem('tq_me') === '1') skip = true;
+    } catch (e) {}
+    var dev = /iPhone|iPad/.test(navigator.userAgent) ? 'iPhone' : /Android/.test(navigator.userAgent) ? 'Android' : 'PC';
+    return function (what, once) {
+      if (skip || window.__SPEED) return;
+      if (once) { if (sent[once]) return; sent[once] = 1; }
+      var t = new Date().toLocaleString('en-GB', { timeZone: 'Africa/Cairo', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+      var body = what + ' \u2022 ' + t + ' \u2022 ' + dev;
+      try {
+        var url = 'https://ntfy.sh/' + topic;
+        if (!(navigator.sendBeacon && navigator.sendBeacon(url, body))) fetch(url, { method: 'POST', body: body, mode: 'no-cors', keepalive: true });
+      } catch (e) {}
+    };
+  })();
+  PING('\ud83d\udc40 Opened the website', 'open');
+
   /* ---------- crypto: the password is the key ---------- */
   function b64(s) { var bin = atob(s), u = new Uint8Array(bin.length); for (var i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return u; }
   function norm(s) { return s.normalize('NFKC').replace(/[ـً-ٰٟ]/g, '').replace(/\s+/g, ' ').trim(); }
@@ -569,6 +593,7 @@ body.main #mute { top: calc(env(safe-area-inset-top, 0px) + 6px); right: calc(ma
     toastTimer = setTimeout(function () { toast.classList.remove('show'); if (then) then(); }, ms);
   }
   function unlock() {
+    PING('\ud83d\udd13 Entered the right password', 'unlock');
     $('qtext').textContent = DATA.ui.question;
     yes.textContent = DATA.ui.yes;
     other.textContent = DATA.ui.other;
@@ -720,6 +745,7 @@ body.main #mute { top: calc(env(safe-area-inset-top, 0px) + 6px); right: calc(ma
     setMenu(false);
     nextBtn.hidden = true;
     var v = VIEWS[i];
+    PING('\ud83d\udcd6 Section: ' + v.title, 'v' + i);
     if (current != null && VIEWS[current].inst && VIEWS[current].inst.stop) VIEWS[current].inst.stop();
     current = i;
     stack.hidden = true;
